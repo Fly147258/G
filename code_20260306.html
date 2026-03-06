@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>保定学院洗澡预约系统</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+  body{background:#f5f7fa;padding:20px;max-width:500px;margin:0 auto}
+  .page{display:none}
+  .active{display:block}
+  .title{text-align:center;font-size:24px;margin:30px 0;color:#222}
+  .input-box{margin-bottom:15px}
+  .input-box label{display:block;margin-bottom:5px;font-size:14px;color:#333}
+  .input-box input{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:16px}
+  .btn{width:100%;padding:14px;background:#0071e3;color:white;border:none;border-radius:8px;margin-top:10px;font-size:16px}
+  .tip{text-align:center;margin-top:15px;color:#666}
+  .link{color:#0071e3;cursor:pointer}
+  .time-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0}
+  .time-item{padding:12px;background:white;border:1px solid #ddd;border-radius:8px;text-align:center}
+  .time-item.active{background:#0071e3;color:white}
+  .my-box{background:white;padding:20px;border-radius:12px;margin-top:20px}
+  .info-line{margin:10px 0;font-size:15px}
+  .success{color:#00b42a;text-align:center}
+  .user-info{background:white;padding:20px;border-radius:12px;margin-bottom:20px}
+</style>
+</head>
+<body>
+
+<!-- 登录 -->
+<div id="login" class="page active">
+  <div class="title">登录</div>
+  <div class="input-box">
+    <label>学号</label>
+    <input id="login_id" placeholder="请输入学号">
+  </div>
+  <div class="input-box">
+    <label>密码</label>
+    <input id="login_pwd" type="password" placeholder="请输入密码">
+  </div>
+  <button class="btn" onclick="login()">登录</button>
+  <div class="tip">没有账号？<span class="link" onclick="go('register')">去注册</span></div>
+</div>
+
+<!-- 注册 -->
+<div id="register" class="page">
+  <div class="title">注册</div>
+  <div class="input-box">
+    <label>学号</label>
+    <input id="reg_id" placeholder="请输入学号">
+  </div>
+  <div class="input-box">
+    <label>姓名</label>
+    <input id="reg_name" placeholder="请输入姓名">
+  </div>
+  <div class="input-box">
+    <label>班级</label>
+    <input id="reg_class" placeholder="如：22级软件1班">
+  </div>
+  <div class="input-box">
+    <label>密码</label>
+    <input id="reg_pwd" type="password" placeholder="请设置密码">
+  </div>
+  <button class="btn" onclick="register()">注册</button>
+  <div class="tip">已有账号？<span class="link" onclick="go('login')">返回登录</span></div>
+</div>
+
+<!-- 首页 -->
+<div id="home" class="page">
+  <div class="title">保定学院洗澡预约系统</div>
+  <button class="btn" onclick="go('book')">立即预约</button>
+  <button class="btn" onclick="go('my')" style="background:#666;margin-top:10px">我的信息</button>
+  <button class="btn" onclick="logout()" style="background:#ff4d4f;margin-top:10px">退出登录</button>
+</div>
+
+<!-- 预约 -->
+<div id="book" class="page">
+  <div class="title">预约洗澡</div>
+  <div class="time-list" id="timeList"></div>
+  <button class="btn" onclick="submitBook()">确认预约</button>
+
+  <div class="my-box" id="myBook" style="display:none">
+    <div class="info-line">已预约：<span id="bookTime"></span></div>
+    <button class="btn" id="signBtn" onclick="signIn()">位置签到</button>
+    <button class="btn" id="outBtn" onclick="signOut()" style="background:#666;display:none">完成签退</button>
+    <div id="finishTip" class="success" style="display:none">已正常签退，谢谢使用</div>
+  </div>
+</div>
+
+<!-- 我的 -->
+<div id="my" class="page">
+  <div class="title">我的信息</div>
+  <div class="user-info">
+    <div class="info-line">学号：<span id="myId"></span></div>
+    <div class="info-line">姓名：<span id="myName"></span></div>
+    <div class="info-line">班级：<span id="myClass"></span></div>
+  </div>
+  <button class="btn" onclick="go('home')">返回首页</button>
+</div>
+
+<script>
+// 页面切换
+function go(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'))
+  document.getElementById(id).classList.add('active')
+}
+
+// 注册
+function register(){
+  let id = document.getElementById('reg_id').value
+  let name = document.getElementById('reg_name').value
+  let cls = document.getElementById('reg_class').value
+  let pwd = document.getElementById('reg_pwd').value
+  if(!id || !name || !cls || !pwd){
+    alert('请填写完整信息')
+    return
+  }
+  localStorage.setItem('user', JSON.stringify({id,name,class:cls,pwd}))
+  alert('注册成功！')
+  go('login')
+}
+
+// 登录
+function login(){
+  let id = document.getElementById('login_id').value
+  let pwd = document.getElementById('login_pwd').value
+  let user = JSON.parse(localStorage.getItem('user')||'{}')
+  if(user.id === id && user.pwd === pwd){
+    showUser()
+    go('home')
+  }else{
+    alert('学号或密码错误')
+  }
+}
+
+// 显示用户信息
+function showUser(){
+  let user = JSON.parse(localStorage.getItem('user'))
+  document.getElementById('myId').innerText = user.id
+  document.getElementById('myName').innerText = user.name
+  document.getElementById('myClass').innerText = user.class
+}
+
+// 退出登录
+function logout(){
+  go('login')
+}
+
+// 初始化时间段
+const times = [
+  "08:00-09:00","09:00-10:00","10:00-11:00",
+  "14:00-15:00","15:00-16:00","16:00-17:00",
+  "19:00-20:00","20:00-21:00","21:00-22:00"
+]
+let selected = null
+let bookData = null
+
+function renderTimes(){
+  let dom = document.getElementById('timeList')
+  dom.innerHTML = ''
+  times.forEach((t,i)=>{
+    let item = document.createElement('div')
+    item.className = 'time-item'
+    item.innerText = t
+    item.onclick = ()=>{
+      document.querySelectorAll('.time-item').forEach(i=>i.classList.remove('active'))
+      item.classList.add('active')
+      selected = i
+    }
+    dom.appendChild(item)
+  })
+}
+
+// 提交预约
+function submitBook(){
+  if(selected == null){
+    alert('请选择时间段')
+    return
+  }
+  bookData = {
+    time: times[selected],
+    sign: false,
+    out: false
+  }
+  document.getElementById('bookTime').innerText = bookData.time
+  document.getElementById('myBook').style.display = 'block'
+  document.getElementById('signBtn').style.display = 'block'
+  document.getElementById('outBtn').style.display = 'none'
+  document.getElementById('finishTip').style.display = 'none'
+  alert('预约成功')
+}
+
+// 签到（保定学院 500米内）
+function signIn(){
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(pos=>{
+      let lat = pos.coords.latitude
+      let lng = pos.coords.longitude
+      // 保定学院坐标
+      let bdLat = 38.8712
+      let bdLng = 115.4468
+      let dis = getDistance(lat,lng,bdLat,bdLng)
+      if(dis < 0.5){
+        bookData.sign = true
+        document.getElementById('signBtn').style.display = 'none'
+        document.getElementById('outBtn').style.display = 'block'
+        alert('签到成功！')
+      }else{
+        alert('必须在保定学院校内才能签到')
+      }
+    },err=>{
+      alert('请允许位置权限')
+    })
+  }else{
+    alert('浏览器不支持定位')
+  }
+}
+
+// 签退
+function signOut(){
+  bookData.out = true
+  document.getElementById('outBtn').style.display = 'none'
+  document.getElementById('finishTip').style.display = 'block'
+  alert('签退成功')
+}
+
+// 计算距离
+function getDistance(lat1,lng1,lat2,lng2){
+  const rad = Math.PI/180
+  const R = 6378.137
+  let dLat = (lat2-lat1)*rad
+  let dLng = (lng2-lng1)*rad
+  let a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*rad)*Math.cos(lat2*rad)*Math.sin(dLng/2)*Math.sin(dLng/2)
+  return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))
+}
+
+// 初始化
+renderTimes()
+</script>
+</body>
+</html>
